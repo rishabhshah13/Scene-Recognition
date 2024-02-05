@@ -21,7 +21,7 @@ def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.8):
         transforms.RandomHorizontalFlip(),  # Flip the data horizontally
         # TODO: Add random crop if needed
         transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
 
     # Load dataset
@@ -40,13 +40,13 @@ def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.8):
                                                        batch_size=batch_size, 
                                                        shuffle=shuffle, 
                                                     #    num_workers=4,
-                                                       pin_memory=True,
+                                                    #    pin_memory=True,
                                                        )
     test_dataset_loader = torch.utils.data.DataLoader(dataset=test_dataset, 
                                                       batch_size=batch_size, 
                                                       shuffle=shuffle, 
                                                     #   num_workers=4,
-                                                      pin_memory=True,
+                                                    #   pin_memory=True,
                                                       )
 
     return train_dataset_loader, test_dataset_loader

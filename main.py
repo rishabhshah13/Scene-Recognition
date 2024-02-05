@@ -17,9 +17,9 @@ from models.resnet import resnet18
 models = {'resnet18': resnet18,}
 
 # RUN DETAILS
-run_name = "jly_0131_resnet_test"
+run_name = "jly_0131_resnet_lr1e-3"
 model_base = 'resnet18'
-num_epochs = 10
+num_epochs = 20
 lr = 1e-3
 random_seed = 42
 save_chks = range(num_epochs) # iterable of epochs for which to save the model
@@ -29,7 +29,7 @@ if device == 'mps':
     torch.mps.empty_cache()
 
 # set up run dir 
-run_dir = os.path.join('saved_models', run_name)
+run_dir = os.path.join('/Users/JuliaYang/Documents/SceneRec/saved_models', run_name)
 os.makedirs(run_dir, exist_ok = True)
 log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), display = False)
 log(f'using device: {device}')
@@ -47,7 +47,7 @@ torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
 
 # dataloader
-train_dataloader, val_dataloader = get_data_loader(data_dir="Data/", shuffle=True)
+train_dataloader, val_dataloader = get_data_loader(data_dir="/Users/JuliaYang/Documents/SceneRec/Data/", shuffle=True)
 
 # define model 
 model = models['resnet18']()
@@ -60,25 +60,27 @@ criterion = nn.CrossEntropyLoss()
 # training loop
 train_loss = []
 val_loss = []
-# train_metrics = []
-# val_metrics = []
+train_metrics = []
+val_metrics = []
 for epoch in range(num_epochs):
     print(f"epoch: {epoch}")
     log(f'epoch {epoch}')
     #training
     model.train()
     batch_loss = []
+    batch_metric = []
     for i, (_data, _target) in tqdm(enumerate(train_dataloader)): 
         data = _data.to(device)
         target = _target.to(device)
         optimizer.zero_grad()
         pred = model(data)
         loss = criterion(pred, target)
-        batch_loss.append(loss.item())
         optimizer.step()
+        batch_loss.append(loss.item())
+        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item()/len(target))
     train_loss.append(sum(np.array(batch_loss)/len(train_dataloader)))
     log(f'\ttrain loss: {train_loss[-1]}')
-    # train_metrics.append() #TODO: add metrics
+    train_metrics.append(np.mean(batch_metric)) #TODO: add metrics
     del data 
     del target
     del pred
@@ -94,18 +96,23 @@ for epoch in range(num_epochs):
             pred = model(data)
             loss = criterion(pred, target)
             batch_loss.append(loss.item())
+            batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item()/len(target))
         val_loss.append(sum(np.array(batch_loss)/len(val_dataloader)))
         log(f'\tval loss: {val_loss[-1]}')
-        # val_metrics.append() #TODO: add metrics
+        val_metrics.append(np.mean(batch_metric)) #TODO: add metrics
 
     if epoch in save_chks: 
         torch.save(model.state_dict(), os.path.join(run_dir, f'{epoch}.chkpt'))
 
-    plt.plot(train_loss, label='train')
-    plt.plot(val_loss, label='val')
+    plt.plot(train_loss, label='train loss')
+    plt.plot(val_loss, label='val loss')
+    plt.plot(train_metrics, label='train accuracy')
+    plt.plot(val_metrics, label='val accuracy')
     plt.xlabel('epoch')
-    plt.ylabel('loss')
+    plt.ylabel('loss, accuracy')
+    plt.legend()
     plt.savefig(os.path.join(run_dir, 'loss'))
+    plt.close()
     del data 
     del target
     del pred
