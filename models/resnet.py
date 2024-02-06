@@ -2,7 +2,8 @@ import torch.nn as nn
 from torchvision import models
 
 def resnet18(): 
-    model = models.resnet18(pretrained=True)
+    # model = models.resnet18(pretrained=True)
+    model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
     for param in model.parameters():
         param.requires_grad = False
     model.avgpool = nn.AdaptiveAvgPool2d(output_size=(1,1))
