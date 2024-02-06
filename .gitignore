@@ -1,4 +1,6 @@
+/Data/*
+Data
 Data/*
+__pycache__/
 saved_models/*
-__pycache__
-.ipynb_checkpoints
+/scenevenv/*
