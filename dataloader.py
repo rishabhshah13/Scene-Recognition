@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import os
 
-def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.8):
+def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.70):
     """
     Define the way we compose the batch dataset including the augmentation for increasing the number of data
     and return the augmented batch-dataset
@@ -26,13 +26,15 @@ def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.8):
 
     # Load dataset
     full_dataset = torchvision.datasets.ImageFolder(root=data_dir, transform=transform)
-
+    # print(len(full_dataset))
     # Calculate sizes of train and test sets
     train_size = int(train_split * len(full_dataset))
-    test_size = len(full_dataset) - train_size
+    test_size = int((len(full_dataset) - train_size)/2)
+    val_size = len(full_dataset) - train_size - test_size
 
     # Split dataset into train and test sets
-    train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size])
+    # train_dataset, test_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size])
+    train_dataset, test_dataset, val_dataset = torch.utils.data.random_split(full_dataset, [train_size, test_size, val_size])
 
 
     # Create data loader
@@ -48,5 +50,12 @@ def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.8):
                                                     #   num_workers=4,
                                                     #   pin_memory=True,
                                                       )
+    
+    val_dataset_loader = torch.utils.data.DataLoader(dataset=val_dataset, 
+                                                      batch_size=batch_size, 
+                                                      shuffle=shuffle, 
+                                                    #   num_workers=4,
+                                                    #   pin_memory=True,
+                                                      )
 
-    return train_dataset_loader, test_dataset_loader
+    return train_dataset_loader, test_dataset_loader, val_dataset_loader
