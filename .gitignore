@@ -4,3 +4,4 @@ Data/*
 __pycache__/
 saved_models/*
 /scenevenv/*
+/venv/*
