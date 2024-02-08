@@ -20,20 +20,20 @@ models = {'resnet18': resnet18,
          }
 
 # RUN DETAILS
-run_name = "jly_0206_enets_lr1e-6_bs=64"
-model_base = 'enet_s'
+run_name = "jly_0207_resenet18_lr1e-2_bs=128_sgdwm08"
+model_base = 'resnet18'
 num_epochs = 20
-bs = 64
-lr = 1e-6
+bs = 128
+lr = 1e-2
 random_seed = 42
-save_chks = range(num_epochs) # iterable of epochs for which to save the model
+save_chks = [19] # iterable of epochs for which to save the model
 
 device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
 if device == 'mps':
     torch.mps.empty_cache()
 
 # set up run dir 
-run_dir = os.path.join('saved_models', run_name)
+run_dir = os.path.join('/Users/JuliaYang/OneDrive - Duke University/Spring24/SceneRec/saved_models', run_name)
 os.makedirs(run_dir, exist_ok = True)
 log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), display = False)
 log(f'using device: {device}')
@@ -52,14 +52,15 @@ torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
 
 # dataloader
-train_dataloader, val_dataloader = get_data_loader(data_dir="Data/",  batch_size=bs, shuffle=True)
+train_dataloader, val_dataloader = get_data_loader(data_dir="/Users/JuliaYang/Documents/Data/",  batch_size=bs, shuffle=True)
 
 # define model 
 model = models[model_base]()
 model.to(device)
 
 # define optimizer and criterion
-optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+# optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+optimizer=torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
 criterion = nn.CrossEntropyLoss()
 
 # training loop
