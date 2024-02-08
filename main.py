@@ -20,7 +20,7 @@ models = {'resnet18': resnet18,
          }
 
 # RUN DETAILS
-run_name = "jly_0207_resenet18_lr1e-2_bs=128_sgdwm08"
+run_name = "jly_0207_resenet18_lr1e-2_bs=128_sgdwm08_tvt"
 model_base = 'resnet18'
 num_epochs = 20
 bs = 128
@@ -52,7 +52,7 @@ torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
 
 # dataloader
-train_dataloader, val_dataloader = get_data_loader(data_dir="/Users/JuliaYang/Documents/Data/",  batch_size=bs, shuffle=True)
+train_dataloader, test_dataloader, val_dataloader  = get_data_loader(data_dir="/Users/JuliaYang/Documents/Data/",  batch_size=bs, shuffle=True)
 
 # define model 
 model = models[model_base]()
@@ -96,10 +96,10 @@ for epoch in range(num_epochs):
     del loss
 
     # validation
-    total_imgs = 0
-    batch_metric = []
     with torch.no_grad():
         model.eval()
+        total_imgs = 0
+        batch_metric = []
         batch_loss = []
         for i, (_data, _target) in tqdm(enumerate(val_dataloader)): 
             data = _data.to(device)
@@ -142,3 +142,12 @@ for epoch in range(num_epochs):
 # testing
 with torch.no_grad():
     model.eval()
+    total_imgs = 0
+    batch_metric = []
+    for i, (_data, _target) in tqdm(enumerate(test_dataloader)): 
+        data = _data.to(device)
+        target = _target.to(device)
+        pred = model(data)
+        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
+        total_imgs += len(target)
+    log(f'\ttest accuracy: {sum(batch_metric)/total_imgs}')
