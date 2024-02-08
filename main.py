@@ -12,15 +12,19 @@ import torch.nn as nn
 from log import create_logger
 from dataloader import get_data_loader
 from models.resnet import resnet18
+from models.efficientnet import effnet_s
 
 # Add your models here
-models = {'resnet18': resnet18,}
+models = {'resnet18': resnet18,
+         'enet_s':effnet_s,
+         }
 
 # RUN DETAILS
-run_name = "jly_0131_resnet_lr1e-3"
-model_base = 'resnet18'
+run_name = "jly_0206_enets_lr1e-6_bs=64"
+model_base = 'enet_s'
 num_epochs = 20
-lr = 1e-3
+bs = 64
+lr = 1e-6
 random_seed = 42
 save_chks = range(num_epochs) # iterable of epochs for which to save the model
 
@@ -29,12 +33,13 @@ if device == 'mps':
     torch.mps.empty_cache()
 
 # set up run dir 
-run_dir = os.path.join('/Users/JuliaYang/Documents/SceneRec/saved_models', run_name)
+run_dir = os.path.join('saved_models', run_name)
 os.makedirs(run_dir, exist_ok = True)
 log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), display = False)
 log(f'using device: {device}')
 log(f'saving models to: {run_dir}')
 log(f'using base model: {model_base}')
+log(f'using batch size: {bs}')
 log(f'learning rate: {lr}')
 log(f'random seed: {random_seed}')
 
@@ -47,10 +52,10 @@ torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
 
 # dataloader
-train_dataloader, val_dataloader = get_data_loader(data_dir="/Users/JuliaYang/Documents/SceneRec/Data/", shuffle=True)
+train_dataloader, val_dataloader = get_data_loader(data_dir="Data/",  batch_size=bs, shuffle=True)
 
 # define model 
-model = models['resnet18']()
+model = models[model_base]()
 model.to(device)
 
 # define optimizer and criterion
@@ -69,24 +74,29 @@ for epoch in range(num_epochs):
     model.train()
     batch_loss = []
     batch_metric = []
+    total_imgs = 0
     for i, (_data, _target) in tqdm(enumerate(train_dataloader)): 
         data = _data.to(device)
         target = _target.to(device)
         optimizer.zero_grad()
         pred = model(data)
         loss = criterion(pred, target)
+        loss.backward()
         optimizer.step()
         batch_loss.append(loss.item())
-        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item()/len(target))
+        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
+        total_imgs += len(target)
     train_loss.append(sum(np.array(batch_loss)/len(train_dataloader)))
     log(f'\ttrain loss: {train_loss[-1]}')
-    train_metrics.append(np.mean(batch_metric)) #TODO: add metrics
+    train_metrics.append(sum(batch_metric)/total_imgs) #TODO: add metrics
     del data 
     del target
     del pred
     del loss
 
     # validation
+    total_imgs = 0
+    batch_metric = []
     with torch.no_grad():
         model.eval()
         batch_loss = []
@@ -96,22 +106,28 @@ for epoch in range(num_epochs):
             pred = model(data)
             loss = criterion(pred, target)
             batch_loss.append(loss.item())
-            batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item()/len(target))
+            batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
+            total_imgs += len(target)
         val_loss.append(sum(np.array(batch_loss)/len(val_dataloader)))
         log(f'\tval loss: {val_loss[-1]}')
-        val_metrics.append(np.mean(batch_metric)) #TODO: add metrics
+        val_metrics.append(sum(batch_metric)/total_imgs) #TODO: add metrics
 
     if epoch in save_chks: 
         torch.save(model.state_dict(), os.path.join(run_dir, f'{epoch}.chkpt'))
 
-    plt.plot(train_loss, label='train loss')
-    plt.plot(val_loss, label='val loss')
+    plt.plot(train_loss, label='train')
+    plt.plot(val_loss, label='val')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.legend()
+    plt.savefig(os.path.join(run_dir, 'loss'))
+    plt.close()
     plt.plot(train_metrics, label='train accuracy')
     plt.plot(val_metrics, label='val accuracy')
     plt.xlabel('epoch')
-    plt.ylabel('loss, accuracy')
+    plt.ylabel('accuracy')
     plt.legend()
-    plt.savefig(os.path.join(run_dir, 'loss'))
+    plt.savefig(os.path.join(run_dir, 'accu'))
     plt.close()
     del data 
     del target
