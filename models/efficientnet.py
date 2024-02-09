@@ -8,7 +8,8 @@ def effnet_s():
         param.requires_grad = False
     model.avgpool = nn.AdaptiveAvgPool2d(output_size=(1,1))
     model.classifier = nn.Sequential(nn.Dropout(0.2), 
-                                     nn.Linear(1280, 5),
+                                     nn.Linear(1280, 512),
+                                     nn.Linear(512, 5),
                                      nn.Sigmoid(),
                                     )
     # model.classifier = nn.Sequential(nn.Flatten(),
