@@ -16,6 +16,7 @@ from models.VGG import VGG
 from datetime import datetime
 import argparse
 from train import train
+from test import test
 
 # seed randoms and make deterministic
 torch.backends.cudnn.enabled=False
@@ -85,8 +86,11 @@ else:
 model = models[model_base]()
 model.to(device)
 
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+criterion = nn.CrossEntropyLoss()
 
-train_loss, val_loss, train_metrics, val_metrics = train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, save_checkpoints,run_dir)
+
+train_loss, val_loss, train_metrics, val_metrics = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
 
 
 plt.plot(train_loss, label='train')
@@ -107,3 +111,17 @@ plt.close()
 
 print("NOW WE WILL TEST!")
 
+test_loss, test_metric = test(model,test_dataloader,criterion)
+
+# plt.plot(test_loss, label='test')
+# plt.xlabel('epoch')
+# plt.ylabel('loss')
+# plt.legend()
+# plt.savefig(os.path.join(run_dir, 'loss'))
+# plt.close()
+# plt.plot(test_metric, label='train accuracy')
+# plt.xlabel('epoch')
+# plt.ylabel('accuracy')
+# plt.legend()
+# plt.savefig(os.path.join(run_dir, 'test accu'))
+# plt.close()

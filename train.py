@@ -18,17 +18,13 @@ from datetime import datetime
 
 
 
-def train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, save_checkpoints,run_dir):
+def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base):
     
 
     device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
     if device == 'mps':
         torch.mps.empty_cache()
     model.to(device)
-
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    criterion = nn.CrossEntropyLoss()
 
 
     train_loss = []
@@ -78,13 +74,26 @@ def train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, sa
                 total_imgs += len(target)
         val_loss.append(sum(batch_loss) / len(val_dataloader))
         val_metrics.append(sum(batch_metric) / total_imgs)
-        print(f"Validation Metric --- Val Accuracy: {sum(batch_metric)/total_imgs} ---- Val Loss: {sum(np.array(batch_loss)/len(val_dataloader))}")
+        print(f"Validation Metric --- Val Accuracy: {sum(batch_metric)/total_imgs} ---- Train Loss: {sum(np.array(batch_loss)/len(val_dataloader))}")
 
         # Save checkpoint if required
         if epoch in save_checkpoints:
             print(f'Saving {run_dir}/{epoch}.chkpt')
-            torch.save(model.state_dict(), f'{run_dir}/{epoch}.chkpt')
-       
+            
+            # Save checkpoint
+            torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'train_loss': sum(np.array(batch_loss)/len(train_dataloader)),
+                    'val_loss': sum(np.array(batch_loss)/len(val_dataloader)),
+                    'model': model
+                    }, f'{run_dir}/{epoch}.chkpt')
+            
+            # Save Whole Model
+            torch.save(model,f'{run_dir}/{model_base}_full_model_{epoch}.pt')
+            # torch.save(model.state_dict(), f'{run_dir}/{epoch}.chkpt')
+        
         if device == 'mps':
             torch.mps.empty_cache()
 

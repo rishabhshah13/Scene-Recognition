@@ -10,3 +10,6 @@ All models should be defined in the models directory. Then in main.py, import th
 # Main loop
 Give your run a name, select a model to train, and configure under the `RUN DETAILS` comment.
 Feel free to add in other metrics you want to track. 
+
+# Sample Run
+python main.py --model_base resnet18 --num_epochs  1 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints  1
