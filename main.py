@@ -1,4 +1,3 @@
-# import packages 
 import os 
 from tqdm import tqdm
 
@@ -10,24 +9,51 @@ import torch.nn as nn
 
 #import your model here
 from log import create_logger
-from dataloader import get_data_loader
+from dataloader import get_data_loader, get_data_loader_split
 from models.resnet import resnet18
 from models.efficientnet import effnet_s
+from models.VGG import VGG
+from datetime import datetime
+import argparse
+from train import train
+
+# seed randoms and make deterministic
+torch.backends.cudnn.enabled=False
+torch.backends.cudnn.deterministic=True
+
+
+now = datetime.now()
+timestamp = now.strftime("%Y-%m-%d_%H%M%S")
+run_name = f"run_{timestamp}"
+
+parser = argparse.ArgumentParser(description='Training script for scene recognition.')
+
+# Add the arguments
+parser.add_argument('--model_base', type=str, default='enet_s', help='Base model to use (default: enet_s).')
+parser.add_argument('--num_epochs', type=int, default=250, help='Number of training epochs (default:  250).')
+parser.add_argument('--batch_size', type=int, default=64, help='Batch size for data loading (default:  64).')
+parser.add_argument('--learning_rate', type=float, default=1e-6, help='Learning rate for the optimizer (default:  1e-6).')
+parser.add_argument('--random_seed', type=int, default=42, help='Random seed for reproducibility (default:  42).')
+parser.add_argument('--use_split', action='store_true', help='Use split dataset (default: False).')
+parser.add_argument('--save_checkpoints', type=lambda s: [int(item) for item in s.split(',')], default=[], help='Epochs at which to save checkpoints (comma-separated values).')
+
+args = parser.parse_args()
+# Set the variables based on the arguments
+model_base = args.model_base
+num_epochs = args.num_epochs
+batch_size = args.batch_size
+learning_rate = args.learning_rate
+random_seed = args.random_seed
+use_split = args.use_split
+save_checkpoints = args.save_checkpoints
 
 # Add your models here
 models = {'resnet18': resnet18,
          'enet_s':effnet_s,
+         'vgg':VGG
          }
 
-# RUN DETAILS
-run_name = "jly_0207_resenet18_lr1e-2_bs=128_sgdwm08_tvt"
-model_base = 'resnet18'
-num_epochs = 20
-bs = 128
-lr = 1e-2
-random_seed = 42
-save_chks = [19] # iterable of epochs for which to save the model
-
+save_chks = range(num_epochs) # iterable of epochs for which to save the model
 device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
 if device == 'mps':
     torch.mps.empty_cache()
@@ -39,115 +65,45 @@ log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), d
 log(f'using device: {device}')
 log(f'saving models to: {run_dir}')
 log(f'using base model: {model_base}')
-log(f'using batch size: {bs}')
-log(f'learning rate: {lr}')
+log(f'using batch size: {batch_size}')
+log(f'learning rate: {learning_rate}')
 log(f'random seed: {random_seed}')
 
-# seed randoms and make deterministic
+
 torch.manual_seed(random_seed)
 torch.cuda.manual_seed(random_seed)
 np.random.seed(random_seed)
-# random.seed(random_seed)
-torch.backends.cudnn.enabled=False
-torch.backends.cudnn.deterministic=True
+
 
 # dataloader
-train_dataloader, test_dataloader, val_dataloader  = get_data_loader(data_dir="/Users/JuliaYang/Documents/Data/",  batch_size=bs, shuffle=True)
+if use_split==True:
+    train_dataloader, test_dataloader, val_dataloader = get_data_loader_split(data_dir="output/",  batch_size=batch_size, shuffle=True)
+else:
+    train_dataloader, test_dataloader, val_dataloader = get_data_loader(data_dir="Data/",  batch_size=batch_size, shuffle=True)
 
 # define model 
 model = models[model_base]()
 model.to(device)
 
-# define optimizer and criterion
-# optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-optimizer=torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
-criterion = nn.CrossEntropyLoss()
 
-# training loop
-train_loss = []
-val_loss = []
-train_metrics = []
-val_metrics = []
-for epoch in range(num_epochs):
-    print(f"epoch: {epoch}")
-    log(f'epoch {epoch}')
-    #training
-    model.train()
-    batch_loss = []
-    batch_metric = []
-    total_imgs = 0
-    for i, (_data, _target) in tqdm(enumerate(train_dataloader)): 
-        data = _data.to(device)
-        target = _target.to(device)
-        optimizer.zero_grad()
-        pred = model(data)
-        loss = criterion(pred, target)
-        loss.backward()
-        optimizer.step()
-        batch_loss.append(loss.item())
-        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
-        total_imgs += len(target)
-    train_loss.append(sum(np.array(batch_loss)/len(train_dataloader)))
-    log(f'\ttrain loss: {train_loss[-1]}')
-    train_metrics.append(sum(batch_metric)/total_imgs) #TODO: add metrics
-    del data 
-    del target
-    del pred
-    del loss
-
-    # validation
-    with torch.no_grad():
-        model.eval()
-        total_imgs = 0
-        batch_metric = []
-        batch_loss = []
-        for i, (_data, _target) in tqdm(enumerate(val_dataloader)): 
-            data = _data.to(device)
-            target = _target.to(device)
-            pred = model(data)
-            loss = criterion(pred, target)
-            batch_loss.append(loss.item())
-            batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
-            total_imgs += len(target)
-        val_loss.append(sum(np.array(batch_loss)/len(val_dataloader)))
-        log(f'\tval loss: {val_loss[-1]}')
-        val_metrics.append(sum(batch_metric)/total_imgs) #TODO: add metrics
-
-    if epoch in save_chks: 
-        torch.save(model.state_dict(), os.path.join(run_dir, f'{epoch}.chkpt'))
-
-    plt.plot(train_loss, label='train')
-    plt.plot(val_loss, label='val')
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.legend()
-    plt.savefig(os.path.join(run_dir, 'loss'))
-    plt.close()
-    plt.plot(train_metrics, label='train accuracy')
-    plt.plot(val_metrics, label='val accuracy')
-    plt.xlabel('epoch')
-    plt.ylabel('accuracy')
-    plt.legend()
-    plt.savefig(os.path.join(run_dir, 'accu'))
-    plt.close()
-    del data 
-    del target
-    del pred
-    del loss
-
-    if device == 'mps':
-        torch.mps.empty_cache()
+train_loss, val_loss, train_metrics, val_metrics = train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, save_checkpoints,run_dir)
 
 
-# testing
-with torch.no_grad():
-    model.eval()
-    total_imgs = 0
-    batch_metric = []
-    for i, (_data, _target) in tqdm(enumerate(test_dataloader)): 
-        data = _data.to(device)
-        target = _target.to(device)
-        pred = model(data)
-        batch_metric.append(sum(torch.argmax(pred, dim=1)==target).item())
-        total_imgs += len(target)
-    log(f'\ttest accuracy: {sum(batch_metric)/total_imgs}')
+plt.plot(train_loss, label='train')
+plt.plot(val_loss, label='val')
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.legend()
+plt.savefig(os.path.join(run_dir, 'loss'))
+plt.close()
+plt.plot(train_metrics, label='train accuracy')
+plt.plot(val_metrics, label='val accuracy')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.legend()
+plt.savefig(os.path.join(run_dir, 'accu'))
+plt.close()
+
+
+print("NOW WE WILL TEST!")
+

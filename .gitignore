@@ -4,5 +4,7 @@ Data/*
 __pycache__/
 saved_models/*
 /scenevenv/*
+/venv/*
+/output/*
 .DS_Store
 .ipynb_checkpoints
