@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 #import your model here
-from log import create_logger
+from models.log import create_logger
 from dataloader import get_data_loader
 from models.resnet import resnet18
 from models.efficientnet import effnet_s

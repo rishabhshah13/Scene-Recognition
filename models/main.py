@@ -1,5 +1,5 @@
 import os 
-from tqdm import tqdm
+# from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,10 +9,10 @@ import torch.nn as nn
 
 #import your model here
 from log import create_logger
-from dataloader import get_data_loader, get_data_loader_split
-from models.resnet import resnet18
-from models.efficientnet import effnet_s
-from models.VGG import VGG
+from dataloader.dataloader import get_data_loader, get_data_loader_split
+from models_definitions.resnet import resnet18
+from models_definitions.efficientnet import effnet_s
+from models_definitions.VGG import VGG
 from datetime import datetime
 import argparse
 from train import train
@@ -60,7 +60,7 @@ if device == 'mps':
     torch.mps.empty_cache()
 
 # set up run dir 
-run_dir = os.path.join('saved_models', run_name)
+run_dir = os.path.join('models/saved_models', run_name)
 os.makedirs(run_dir, exist_ok = True)
 log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), display = False)
 log(f'using device: {device}')
@@ -78,7 +78,7 @@ np.random.seed(random_seed)
 
 # dataloader
 if use_split==True:
-    train_dataloader, test_dataloader, val_dataloader = get_data_loader_split(data_dir="output/",  batch_size=batch_size, shuffle=True)
+    train_dataloader, test_dataloader, val_dataloader = get_data_loader_split(data_dir="data/raw/",  batch_size=batch_size, shuffle=True)
 else:
     train_dataloader, test_dataloader, val_dataloader = get_data_loader(data_dir="Data/",  batch_size=batch_size, shuffle=True)
 

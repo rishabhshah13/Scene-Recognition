@@ -1,0 +1,10 @@
+# /Data/*
+# Data
+# Data/*
+__pycache__/
+/models/saved_models/*
+/scenevenv/*
+/venv/*
+# /output/*
+/data/*
+Orignal_Data/*

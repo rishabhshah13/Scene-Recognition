@@ -8,12 +8,12 @@ import torch
 import torch.nn as nn
 
 #import your model here
-from log import create_logger
-from dataloader import get_data_loader, get_data_loader_split
-from models.resnet import resnet18
-from models.efficientnet import effnet_s
-from models.VGG import VGG
-from datetime import datetime
+# from log import create_logger
+# from dataloader import get_data_loader, get_data_loader_split
+# from models.resnet import resnet18
+# from models.efficientnet import effnet_s
+# from models.VGG import VGG
+# from datetime import datetime
 
 def test(model,test_dataloader,criterion):
 
@@ -45,7 +45,9 @@ def test(model,test_dataloader,criterion):
         print(total_imgs)
         test_metric.append(sum(batch_metric) / total_imgs)
 
+        print('-'*100)
         print(f"Test Metric --- Test Accuracy: {sum(batch_metric)/total_imgs} ---- Val Loss: {sum(np.array(batch_loss)/len(test_dataloader))}")
+        print('-'*100)
 
     return test_loss, test_metric
 

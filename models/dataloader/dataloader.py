@@ -83,7 +83,7 @@ def get_data_loader_split(data_dir, batch_size=256, shuffle=True):
     ])
 
     # Load dataset
-    train_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/train/', transform=transform)
+    train_dataset = torchvision.datasets.ImageFolder(root= data_dir + '/train/', transform=transform)
     test_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/test/', transform=transform)
     val_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/val/', transform=transform)
 
