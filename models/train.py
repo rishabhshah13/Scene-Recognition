@@ -5,15 +5,7 @@
 import numpy as np
 
 import torch 
-# import torch.nn as nn
 
-#import your model here
-# from log import create_logger
-# from dataloader import get_data_loader, get_data_loader_split
-# from models_definitions.resnet import resnet18
-# from models_definitions.efficientnet import effnet_s
-# from models_definitions.VGG import VGG
-# from datetime import datetime
 
 from tqdm import tqdm
 
@@ -29,9 +21,14 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
 
 
     train_loss = []
-    val_loss = []
+    val_loss_list = []
     train_metrics = []
     val_metrics = []
+    best_val_accuracy =  0.0  # Initialize the best validation accuracy
+    best_val_loss = float('inf')  # Initialize the best validation loss
+
+    best_val_loss_path = ''
+    best_val_accuracy_path = ''
 
     for epoch in range(num_epochs):
         print('-'*100)
@@ -67,6 +64,8 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
         batch_metric = []
         batch_loss = []
         total_imgs =  0
+        # Calculate validation metrics
+        
         with torch.no_grad():
             for i, (_data, _target) in enumerate(val_dataloader):
                 data = _data.to(device)
@@ -76,26 +75,57 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
                 batch_loss.append(loss.item())
                 batch_metric.append((pred.argmax(dim=1) == target).sum().item())
                 total_imgs += len(target)
-        val_loss.append(sum(batch_loss) / len(val_dataloader))
-        val_metrics.append(sum(batch_metric) / total_imgs)
-        print(f"Validation Metric --- Val Accuracy: {sum(batch_metric)/total_imgs} ---- Train Loss: {sum(np.array(batch_loss)/len(val_dataloader))}")
+        
+        val_accuracy = sum(batch_metric) / total_imgs
+        val_loss = sum(np.array(batch_loss)/len(train_dataloader))
+
+        val_loss_list.append(val_loss)
+        val_metrics.append(val_accuracy)
+
+        print(f"Validation Metric --- Val Accuracy: {val_accuracy} ---- Val Loss: {val_loss}")
         print('-'*100)
+
+
+        # Check if the current validation accuracy is better than the best so far
+        if val_accuracy > best_val_accuracy:
+            best_val_accuracy = val_accuracy
+            # Save the model because the validation accuracy has improved
+            # torch.save({
+            #         'epoch': epoch,
+            #         'model_state_dict': model.state_dict(),
+            #         'optimizer_state_dict': optimizer.state_dict(),
+            #         'train_loss': sum(np.array(batch_loss)/len(train_dataloader)),
+            #         'val_loss': sum(np.array(batch_loss)/len(val_dataloader)),
+            #         'model': model
+            #         }, f'{run_dir}/{epoch}.chkpt')
+            print("Saving Model, got better val accuracy")
+            torch.save(model, f'{run_dir}/{model_base}_best_val_acc_{epoch}.pt')
+
+        # Check if the current validation loss is lower than the best so far
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            # Save the model because the validation loss has decreased
+            print("Saving Model, got better val loss")
+            best_val_loss_path = f'{run_dir}/{model_base}_best_val_loss_{epoch}.pt'
+            torch.save(model, f'{run_dir}/{model_base}_best_val_loss_{epoch}.pt')
+
 
         # Save checkpoint if required
         if epoch in save_checkpoints:
             print(f'Saving {run_dir}/{epoch}.chkpt')
             
             # Save checkpoint
-            torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'train_loss': sum(np.array(batch_loss)/len(train_dataloader)),
-                    'val_loss': sum(np.array(batch_loss)/len(val_dataloader)),
-                    'model': model
-                    }, f'{run_dir}/{epoch}.chkpt')
+            # torch.save({
+            #         'epoch': epoch,
+            #         'model_state_dict': model.state_dict(),
+            #         'optimizer_state_dict': optimizer.state_dict(),
+            #         'train_loss': sum(np.array(batch_loss)/len(train_dataloader)),
+            #         'val_loss': sum(np.array(batch_loss)/len(val_dataloader)),
+            #         'model': model
+            #         }, f'{run_dir}/{epoch}.chkpt')
             
             # Save Whole Model
+            best_val_accuracy_path = f'{run_dir}/{model_base}_full_model_{epoch}.pt'
             torch.save(model,f'{run_dir}/{model_base}_full_model_{epoch}.pt')
             # torch.save(model.state_dict(), f'{run_dir}/{epoch}.chkpt')
         
@@ -105,5 +135,5 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
         print('\n\n')
 
 
-    return train_loss, val_loss, train_metrics, val_metrics
+    return train_loss, val_loss, train_metrics, val_metrics, best_val_loss_path, best_val_accuracy_path
 

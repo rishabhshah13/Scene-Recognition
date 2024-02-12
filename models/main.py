@@ -37,6 +37,7 @@ parser.add_argument('--learning_rate', type=float, default=1e-6, help='Learning 
 parser.add_argument('--random_seed', type=int, default=42, help='Random seed for reproducibility (default:  42).')
 parser.add_argument('--use_split', action='store_true', help='Use split dataset (default: False).')
 parser.add_argument('--save_checkpoints', type=lambda s: [int(item) for item in s.split(',')], default=[], help='Epochs at which to save checkpoints (comma-separated values).')
+parser.add_argument('--use_albumentations', type=bool, default=True, help='Use albumentations for data transformations')
 
 args = parser.parse_args()
 # Set the variables based on the arguments
@@ -47,6 +48,7 @@ learning_rate = args.learning_rate
 random_seed = args.random_seed
 use_split = args.use_split
 save_checkpoints = args.save_checkpoints
+use_albumentations = args.use_albumentations
 
 # Add your models here
 models = {'resnet18': resnet18,
@@ -69,6 +71,7 @@ log(f'using base model: {model_base}')
 log(f'using batch size: {batch_size}')
 log(f'learning rate: {learning_rate}')
 log(f'random seed: {random_seed}')
+log(f'use_albumentations: {use_albumentations}')
 
 
 torch.manual_seed(random_seed)
@@ -78,7 +81,7 @@ np.random.seed(random_seed)
 
 # dataloader
 if use_split==True:
-    train_dataloader, test_dataloader, val_dataloader = get_data_loader_split(data_dir="data/raw/",  batch_size=batch_size, shuffle=True)
+    train_dataloader, test_dataloader, val_dataloader = get_data_loader_split(data_dir="data/raw/",  batch_size=batch_size, shuffle=True,use_albumentations=use_albumentations)
 else:
     train_dataloader, test_dataloader, val_dataloader = get_data_loader(data_dir="Data/",  batch_size=batch_size, shuffle=True)
 
@@ -90,7 +93,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 
 
-train_loss, val_loss, train_metrics, val_metrics = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
+train_loss, val_loss, train_metrics, val_metrics, best_val_loss_path, best_val_accuracy_path = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
 
 
 plt.plot(train_loss, label='train')
@@ -111,7 +114,47 @@ plt.close()
 
 print("NOW WE WILL TEST!")
 
+print('-'*100)
+print(f'Using {best_val_accuracy_path}')
+# best_model_path = os.path.join(run_dir, best_val_loss_path)
+print("best_val_loss_path Metrics")
+if os.path.exists(best_val_loss_path):
+    model = torch.load(best_val_loss_path)
+else:
+    print("Best model weights not found.")
+    # return
+
 test_loss, test_metric = test(model,test_dataloader,criterion)
+print('-'*100)
+
+
+
+print('-'*100)
+print(f'Using {best_val_accuracy_path}')
+# best_model_path = os.path.join(run_dir, 'best_model.pth')
+if os.path.exists(best_val_accuracy_path):
+    model = torch.load(best_val_accuracy_path)
+else:
+    print("Best model weights not found.")
+    # return
+
+test_loss, test_metric = test(model,test_dataloader,criterion)
+print('-'*100)
+
+
+
+
+# best_model_path = os.path.join(run_dir, 'best_model.pth')
+# if os.path.exists(best_model_path):
+#     model.load_state_dict(torch.load(best_model_path))
+# else:
+#     print("Best model weights not found.")
+#     # return
+
+# test_loss, test_metric = test(model,test_dataloader,criterion)
+
+
+
 
 # plt.plot(test_loss, label='test')
 # plt.xlabel('epoch')

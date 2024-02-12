@@ -13,14 +13,20 @@ Feel free to add in other metrics you want to track.
 
 
 
-# Download Data set
 
+# Download Data set
+python data/download.py
 
 # Transform Data set
 
 
 # Train Model
-python models/main.py --model_base resnet18 --num_epochs  5 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints  1,2,3
+python models/main.py --model_base resnet18 --num_epochs  80 --batch_size  128 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints 1,3, --use_albumentations True
+
+python models/main.py --model_base enet_s --num_epochs  5 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints  1,2,3 --use_albumentations True
+
+python models/main.py --model_base vgg --num_epochs  5 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints  1,2,3 --use_albumentations True
 
 
 # Run UI
+streamlit run app/UI.py

@@ -1,28 +1,10 @@
-## Includes albumentations
-
 import torch
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
 import os
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
-from PIL import Image
 
 
-class Transform():
-  def __init__(self,transform):
-    self.transform=transform
-  def __call__(self,image):
-    # print(self.transform(image=image)["image"].shape)
-    return self.transform(image=image)["image"]
-
-def open_img(img_path):
-    # print(img_path)
-    img=Image.open(img_path)
-    if img.mode == 'L':
-        img = img.convert('RGB')
-    return np.array(img)
 
 
 def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.70):
@@ -83,7 +65,7 @@ def get_data_loader(data_dir, batch_size=256, shuffle=True, train_split=0.70):
 
 
 
-def get_data_loader_split(data_dir, batch_size=256, shuffle=True,use_albumentations=True):
+def get_data_loader_split(data_dir, batch_size=256, shuffle=True):
     """
     Define the way we compose the batch dataset including the augmentation for increasing the number of data
     and return the augmented batch-dataset
@@ -103,36 +85,12 @@ def get_data_loader_split(data_dir, batch_size=256, shuffle=True,use_albumentati
         transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
     ])
 
-
-    val_transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
-
-
-    albumentations_transform = A.Compose(
-      [
-          A.SmallestMaxSize(max_size=160),
-          A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.5),
-          A.RandomCrop(height=128, width=128),
-          A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
-          A.RandomBrightnessContrast(p=0.5),
-          A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-          ToTensorV2(),
-      ]
-    )
-    
     # Load dataset
-    if use_albumentations==True:
-      train_dataset = torchvision.datasets.ImageFolder(root= data_dir + '/train/', transform=Transform(albumentations_transform),loader=open_img)
-      test_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/test/',transform=val_transform)
-      val_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/val/',transform=val_transform)
-    else:
-      train_dataset = torchvision.datasets.ImageFolder(root= data_dir + '/train/', transform=transform)
-      test_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/test/', transform=val_transform)
-      val_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/val/', transform=val_transform)
+    train_dataset = torchvision.datasets.ImageFolder(root= data_dir + '/train/', transform=transform)
+    test_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/test/', transform=transform)
+    val_dataset = torchvision.datasets.ImageFolder(root=data_dir + '/val/', transform=transform)
 
 
-    
     # Create data loader
     train_dataset_loader = torch.utils.data.DataLoader(dataset=train_dataset, 
                                                        batch_size=batch_size, 
