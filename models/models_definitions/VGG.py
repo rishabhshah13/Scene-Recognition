@@ -5,7 +5,7 @@ from torchvision import models
 
 def VGG():
     
-    model = models.vgg16(pretrained=True)  # Choose appropriate model (vgg16, vgg19, etc.)
+    model = models.vgg16(weights=models.VGG16_Weights.DEFAULT)  # Choose appropriate model (vgg16, vgg19, etc.)
     for param in model.features.parameters():
         param.requires_grad = False  # Freeze convolutional layers
     num_ftrs = model.classifier[6].in_features  # Get number of features from pre-trained model

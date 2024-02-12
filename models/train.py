@@ -135,5 +135,5 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
         print('\n\n')
 
 
-    return train_loss, val_loss, train_metrics, val_metrics, best_val_loss_path, best_val_accuracy_path
+    return train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path
 

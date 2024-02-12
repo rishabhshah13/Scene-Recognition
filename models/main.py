@@ -14,7 +14,7 @@ from models_definitions.resnet import resnet18
 from models_definitions.efficientnet import effnet_s
 from models_definitions.VGG import VGG
 from models_definitions.densenet import densenet121
-
+from metric_logging import get_df, add_to_database
 from datetime import datetime
 import argparse
 from train import train
@@ -25,6 +25,17 @@ torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
 
 
+import ssl
+
+ssl._create_default_https_context = ssl._create_stdlib_context
+
+
+def boolean_string(s):
+    if s not in {'False', 'True'}:
+        raise ValueError('Not a valid boolean string')
+    return s == 'True'
+
+    
 now = datetime.now()
 timestamp = now.strftime("%Y-%m-%d_%H%M%S")
 run_name = f"run_{timestamp}"
@@ -39,7 +50,7 @@ parser.add_argument('--learning_rate', type=float, default=1e-6, help='Learning 
 parser.add_argument('--random_seed', type=int, default=42, help='Random seed for reproducibility (default:  42).')
 parser.add_argument('--use_split', action='store_true', help='Use split dataset (default: False).')
 parser.add_argument('--save_checkpoints', type=lambda s: [int(item) for item in s.split(',')], default=[], help='Epochs at which to save checkpoints (comma-separated values).')
-parser.add_argument('--use_albumentations', type=bool, default=True, help='Use albumentations for data transformations')
+parser.add_argument('--use_albumentations', default=False, type=boolean_string, help='Use albumentations for data transformations')
 parser.add_argument('--opt', type=str, default='sgd', help='Optimizer: sgd or adam')
 
 
@@ -59,7 +70,7 @@ opt = args.opt
 models = {'resnet18': resnet18,
          'enet_s':effnet_s,
          'vgg':VGG,
-         'dense':densenet121,
+         'densenet':densenet121,
          }
 
 save_chks = range(num_epochs) # iterable of epochs for which to save the model
@@ -68,7 +79,7 @@ if device == 'mps':
     torch.mps.empty_cache()
 
 # set up run dir 
-run_dir = os.path.join('models/saved_models', run_name)
+run_dir = os.path.join('models/saved_models', model_base ,run_name)
 os.makedirs(run_dir, exist_ok = True)
 log, logclose = create_logger(log_filename=os.path.join(run_dir, 'train.log'), display = False)
 log(f'using device: {device}')
@@ -78,6 +89,8 @@ log(f'using batch size: {batch_size}')
 log(f'learning rate: {learning_rate}')
 log(f'random seed: {random_seed}')
 log(f'use_albumentations: {use_albumentations}')
+
+
 
 
 torch.manual_seed(random_seed)
@@ -104,7 +117,7 @@ elif opt == 'adam':
 criterion = nn.CrossEntropyLoss()
 
 
-train_loss, val_loss, train_metrics, val_metrics, best_val_loss_path, best_val_accuracy_path = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
+train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
 
 
 plt.plot(train_loss, label='train')
@@ -135,7 +148,7 @@ else:
     print("Best model weights not found.")
     # return
 
-test_loss, test_metric = test(model,test_dataloader,criterion)
+test_loss, test_metric = test(model, test_dataloader, device, criterion)
 create_cm(model, best_val_loss_path, test_dataloader)
 print('-'*100)
 
@@ -153,6 +166,14 @@ else:
 test_loss, test_metric  = test(model, test_dataloader, device, criterion)
 create_cm(model, best_val_accuracy_path, test_dataloader)
 print('-'*100)
+
+df = get_df(run_dir)
+add_to_database(df, model_base, run_name, train_metrics, train_loss, val_metrics, val_loss, \
+                best_val_loss, \
+                best_val_loss_path, \
+                best_val_accuracy, \
+                best_val_accuracy_path,test_loss,test_metric)
+
 
 
 # get_tests(model, os.path.join(run_dir, 'test'), test_dataloader)

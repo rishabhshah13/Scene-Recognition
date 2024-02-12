@@ -105,6 +105,7 @@ def get_data_loader_split(data_dir, batch_size=256, shuffle=True,use_albumentati
 
 
     val_transform = transforms.Compose([
+        transforms.Resize([224, 224]),  # Resizing the image as the VGG only takes 224 x 224 as input size
         transforms.ToTensor()
     ])
 
