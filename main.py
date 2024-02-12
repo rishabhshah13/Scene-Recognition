@@ -13,9 +13,11 @@ from dataloader import get_data_loader, get_data_loader_split
 from models.resnet import resnet18
 from models.efficientnet import effnet_s
 from models.VGG import VGG
+from models.densenet import densenet121
 from datetime import datetime
 import argparse
 from train import train
+from test import get_tests
 
 # seed randoms and make deterministic
 torch.backends.cudnn.enabled=False
@@ -50,7 +52,8 @@ save_checkpoints = args.save_checkpoints
 # Add your models here
 models = {'resnet18': resnet18,
          'enet_s':effnet_s,
-         'vgg':VGG
+         'vgg':VGG,
+         'dense':densenet121,
          }
 
 save_chks = range(num_epochs) # iterable of epochs for which to save the model
@@ -107,3 +110,4 @@ plt.close()
 
 print("NOW WE WILL TEST!")
 
+get_tests(model, os.path.join(run_dir, 'test'), test_dataloader)

@@ -13,12 +13,13 @@ from dataloader import get_data_loader, get_data_loader_split
 from models.resnet import resnet18
 from models.efficientnet import effnet_s
 from models.VGG import VGG
+from models.densenet import densenet121
 from datetime import datetime
 
 
 
 
-def train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, save_checkpoints,run_dir):
+def train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, save_checkpoints,run_dir, opt='sgd'):
     
 
     device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
@@ -26,9 +27,11 @@ def train(model, train_dataloader, val_dataloader, num_epochs, learning_rate, sa
         torch.mps.empty_cache()
     model.to(device)
 
-
-    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    
+    if opt == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    else: 
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     criterion = nn.CrossEntropyLoss()
 
