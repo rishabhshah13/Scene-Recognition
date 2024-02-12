@@ -27,6 +27,11 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
     best_val_accuracy =  0.0  # Initialize the best validation accuracy
     best_val_loss = float('inf')  # Initialize the best validation loss
 
+    fortopk_train_preds = []
+    fortopk_train_targets = []
+    fortopk_val_preds = []
+    fortopk_val_targets = []
+
     best_val_loss_path = ''
     best_val_accuracy_path = ''
 
@@ -44,6 +49,11 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
             target = _target.to(device)
             optimizer.zero_grad()
             pred = model(data)
+
+            fortopk_train_preds.append(pred)
+            fortopk_train_targets.append(target)
+
+
             loss = criterion(pred, target)
             loss.backward()
             optimizer.step()
@@ -71,6 +81,11 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
                 data = _data.to(device)
                 target = _target.to(device)
                 pred = model(data)
+
+                fortopk_val_preds.append(pred)
+                fortopk_val_targets.append(target)
+
+
                 loss = criterion(pred, target)
                 batch_loss.append(loss.item())
                 batch_metric.append((pred.argmax(dim=1) == target).sum().item())
@@ -129,11 +144,25 @@ def train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,
             torch.save(model,f'{run_dir}/{model_base}_full_model_{epoch}.pt')
             # torch.save(model.state_dict(), f'{run_dir}/{epoch}.chkpt')
         
+
+
+        total_correct = sum([(pred.argmax(dim=1) == target).float().sum().item() for pred, target in zip(fortopk_train_preds, fortopk_train_targets)])
+        total_samples = sum([len(target) for target in fortopk_train_targets])
+        top1_train_accuracy = total_correct / total_samples
+        print(f"Final Top-1 Train Accuracy: {top1_train_accuracy}")
+
+        total_correct = sum([(pred.argmax(dim=1) == target).float().sum().item() for pred, target in zip(fortopk_val_preds, fortopk_val_targets)])
+        total_samples = sum([len(target) for target in fortopk_val_targets])
+        top1_val_accuracy = total_correct / total_samples
+        print(f"Final Top-1 Val Accuracy: {top1_val_accuracy}")
+
+
+
         if device == 'mps':
             torch.mps.empty_cache()
 
         print('\n\n')
 
 
-    return train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path
+    return train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path, top1_train_accuracy, top1_val_accuracy
 

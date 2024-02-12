@@ -23,6 +23,11 @@ model_loaded_list = {'densenet':'', \
                     'resnet18':'', \
                     'vgg':''}
 
+device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
+if device == 'mps':
+    torch.mps.empty_cache()
+
+
 # upload_model_btn = st.button("Upload Model File")
 
 # if "upload_model_btn_state" not in st.session_state:
@@ -107,7 +112,6 @@ if uploadbtn or st.session_state.uploadbtn_state:
         pred_button = st.button("Perform Prediction")
         if pred_button:
             st.image(org_image, caption='Predicted Image')
-            device = 'mps'
 
             # for model in model_loaded_list:
             for model_name, model in model_loaded_list.items():

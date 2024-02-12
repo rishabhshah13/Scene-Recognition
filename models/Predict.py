@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 import torch
 
 
+
 def predict(model,image,device):
     
     # model = torch.load('/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/saved_models/run_2024-02-10_150948/resnet18_full_model_0.pt').to('mps')
@@ -24,7 +25,7 @@ def predict(model,image,device):
 
     # Perform inference
     with torch.no_grad():
-        output = model(input_batch.to('mps'))
+        output = model(input_batch.to(mps))
 
     # Get the predicted class
     _, predicted = torch.max(output,  1)

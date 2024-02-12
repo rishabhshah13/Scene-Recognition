@@ -10,3 +10,5 @@ data/raw/*
 Orignal_Data/*
 models/saved_models/*
 data/raw.zip
+/Notebooks/snapshot_iter_765280.caffemodel
+/Notebooks/deploy_10.prototxt

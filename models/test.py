@@ -15,12 +15,21 @@ def test(model, test_dataloader, device, criterion):
     batch_metric = []
     batch_loss = []
     total_imgs =  0
+    
+    fortopk_test_preds = []
+    fortopk_test_targets = []
+
 
     with torch.no_grad():
         for i, (_data, _target) in tqdm(enumerate(test_dataloader)):
             data = _data.to(device)
             target = _target.to(device)
             pred = model(data)
+
+            fortopk_test_preds.append(pred)
+            fortopk_test_targets.append(target)
+
+
             loss = criterion(pred, target)
             batch_loss.append(loss.item())
             batch_metric.append((pred.argmax(dim=1) == target).sum().item())
@@ -29,12 +38,18 @@ def test(model, test_dataloader, device, criterion):
     test_accuracy = sum(batch_metric) / total_imgs
     test_loss = sum(np.array(batch_loss) / len(test_dataloader))
 
+    total_correct = sum([(pred.argmax(dim=1) == target).float().sum().item() for pred, target in zip(fortopk_test_preds, fortopk_test_targets)])
+    total_samples = sum([len(target) for target in fortopk_test_targets])
+    top1_test_accuracy = total_correct / total_samples
+    print(f"Final Top-1 Test Accuracy: {top1_test_accuracy}")
+    
+
     print('-'*100)
     print(f"Test Metric --- Test Accuracy: {test_accuracy} ---- Test Loss: {test_loss}")
     print('-'*100)
 
 
-    return test_accuracy, test_loss
+    return test_accuracy, test_loss, top1_test_accuracy
 
 
 

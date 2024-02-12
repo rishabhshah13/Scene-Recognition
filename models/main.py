@@ -117,7 +117,7 @@ elif opt == 'adam':
 criterion = nn.CrossEntropyLoss()
 
 
-train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
+train_loss, val_loss, train_metrics, val_metrics, best_val_loss, best_val_loss_path, best_val_accuracy, best_val_accuracy_path, top1_train_accuracy, top1_val_accuracy  = train(model, train_dataloader, val_dataloader, num_epochs, save_checkpoints,run_dir,optimizer,criterion,model_base)
 
 
 plt.plot(train_loss, label='train')
@@ -148,7 +148,7 @@ else:
     print("Best model weights not found.")
     # return
 
-test_loss, test_metric = test(model, test_dataloader, device, criterion)
+test_loss, test_metric,top1_test_accuracy = test(model, test_dataloader, device, criterion)
 create_cm(model, best_val_loss_path, test_dataloader)
 print('-'*100)
 
@@ -163,7 +163,7 @@ else:
     print("Best model weights not found.")
     # return
 
-test_loss, test_metric  = test(model, test_dataloader, device, criterion)
+test_loss, test_metric,top1_test_accuracy  = test(model, test_dataloader, device, criterion)
 create_cm(model, best_val_accuracy_path, test_dataloader)
 print('-'*100)
 
@@ -172,7 +172,7 @@ add_to_database(df, model_base, run_name, train_metrics, train_loss, val_metrics
                 best_val_loss, \
                 best_val_loss_path, \
                 best_val_accuracy, \
-                best_val_accuracy_path,test_loss,test_metric)
+                best_val_accuracy_path,test_loss,test_metric,top1_train_accuracy, top1_val_accuracy,top1_test_accuracy)
 
 
 
