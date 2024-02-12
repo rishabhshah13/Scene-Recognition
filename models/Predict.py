@@ -25,7 +25,7 @@ def predict(model,image,device):
 
     # Perform inference
     with torch.no_grad():
-        output = model(input_batch.to(mps))
+        output = model(input_batch.to(device))
 
     # Get the predicted class
     _, predicted = torch.max(output,  1)

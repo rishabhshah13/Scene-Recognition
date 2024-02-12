@@ -17,6 +17,7 @@ sys.path.append(str(current_dir))
 from models.Predict import predict
 
 from app import load_models
+from app import get_torch_cam
 
 model_loaded_list = {'densenet':'', \
                     'enet_s':'', \
@@ -26,31 +27,6 @@ model_loaded_list = {'densenet':'', \
 device = 'cuda' if torch.cuda.is_available() else ('mps' if torch.backends.mps.is_available() else 'cpu')
 if device == 'mps':
     torch.mps.empty_cache()
-
-
-# upload_model_btn = st.button("Upload Model File")
-
-# if "upload_model_btn_state" not in st.session_state:
-#     st.session_state.upload_model_btn_state = None
-
-# if upload_model_btn or st.session_state.upload_model_btn_state:
-#     st.session_state.upload_model_btn_state = True
-
-# # if upload_model_button:
-#     model_file = st.file_uploader("Choose a model file", type=['h5', 'pth','pt'])
-#     # model_file = st.file_uploader("Upload image", type=["jpg", "jpeg"])
-
-
-#     if model_file is not None:
-#         st.success('Model file uploaded successfully!')
-#         # Save the uploaded file temporarily
-#         temp_model_path = os.path.join('/tmp', model_file.name)
-#         with open(temp_model_path, 'wb') as f:
-#             f.write(model_file.getvalue())
-
-#         model = torch.load(temp_model_path).to('mps')
-#     else:
-#         st.warning('No model file was uploaded.')
 
 
 best_model_btn = st.button("Load Best Models")
@@ -66,33 +42,7 @@ if best_model_btn or st.session_state.best_model_btn_btn_state:
     model_loaded_list['enet_s'] = enet_model
     model_loaded_list['resnet18'] = resnet_model
     model_loaded_list['vgg'] = vgg_model
-    print("Models Loaded")
-
-
-    # densenet_model, enet_model, resnet_model, vgg_model = load_models()
-    # model_loaded_list['DenseNet'] = densenet_model
-    # model_loaded_list['EfficientNet'] = enet_model
-    # model_loaded_list['ResidualNet'] = resnet_model
-    # model_loaded_list['VGG'] = vgg_model
-    # st.write("Models Loaded")
-    
-# # if upload_model_button:
-#     model_file = st.file_uploader("Choose a model file", type=['h5', 'pth','pt'])
-#     # model_file = st.file_uploader("Upload image", type=["jpg", "jpeg"])
-
-
-#     if model_file is not None:
-#         st.success('Model file uploaded successfully!')
-#         # Save the uploaded file temporarily
-#         temp_model_path = os.path.join('/tmp', model_file.name)
-#         with open(temp_model_path, 'wb') as f:
-#             f.write(model_file.getvalue())
-
-#         model = torch.load(temp_model_path).to('mps')
-#     else:
-#         st.warning('No model file was uploaded.')
-
-
+    st.write("Models Loaded")
 
 
 uploadbtn = st.button("Upload Image")
@@ -118,3 +68,6 @@ if uploadbtn or st.session_state.uploadbtn_state:
 
                 predicted_class, predicted_class_name = predict(model,org_image,device)
                 st.write(f"The class predict by {model_name} is  : {predicted_class_name}")
+                result = get_torch_cam(model,model_name,org_image)
+                st.image(result, caption=f'{model_name }Predicted Heat Map Image')
+
