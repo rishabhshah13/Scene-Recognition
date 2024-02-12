@@ -13,10 +13,12 @@ from dataloader.dataloader import get_data_loader, get_data_loader_split
 from models_definitions.resnet import resnet18
 from models_definitions.efficientnet import effnet_s
 from models_definitions.VGG import VGG
+from models_definitions.densenet import densenet121
+
 from datetime import datetime
 import argparse
 from train import train
-from test import test
+from test import test, create_cm
 
 # seed randoms and make deterministic
 torch.backends.cudnn.enabled=False
@@ -38,6 +40,8 @@ parser.add_argument('--random_seed', type=int, default=42, help='Random seed for
 parser.add_argument('--use_split', action='store_true', help='Use split dataset (default: False).')
 parser.add_argument('--save_checkpoints', type=lambda s: [int(item) for item in s.split(',')], default=[], help='Epochs at which to save checkpoints (comma-separated values).')
 parser.add_argument('--use_albumentations', type=bool, default=True, help='Use albumentations for data transformations')
+parser.add_argument('--opt', type=str, default='sgd', help='Optimizer: sgd or adam')
+
 
 args = parser.parse_args()
 # Set the variables based on the arguments
@@ -49,11 +53,13 @@ random_seed = args.random_seed
 use_split = args.use_split
 save_checkpoints = args.save_checkpoints
 use_albumentations = args.use_albumentations
+opt = args.opt
 
 # Add your models here
 models = {'resnet18': resnet18,
          'enet_s':effnet_s,
-         'vgg':VGG
+         'vgg':VGG,
+         'dense':densenet121,
          }
 
 save_chks = range(num_epochs) # iterable of epochs for which to save the model
@@ -89,7 +95,12 @@ else:
 model = models[model_base]()
 model.to(device)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+# optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+if opt == 'sgd':
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+elif opt == 'adam': 
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 criterion = nn.CrossEntropyLoss()
 
 
@@ -115,7 +126,7 @@ plt.close()
 print("NOW WE WILL TEST!")
 
 print('-'*100)
-print(f'Using {best_val_accuracy_path}')
+print(f'Using {best_val_loss_path}')
 # best_model_path = os.path.join(run_dir, best_val_loss_path)
 print("best_val_loss_path Metrics")
 if os.path.exists(best_val_loss_path):
@@ -125,6 +136,7 @@ else:
     # return
 
 test_loss, test_metric = test(model,test_dataloader,criterion)
+create_cm(model, best_val_loss_path, test_dataloader)
 print('-'*100)
 
 
@@ -138,9 +150,12 @@ else:
     print("Best model weights not found.")
     # return
 
-test_loss, test_metric = test(model,test_dataloader,criterion)
+test_loss, test_metric  = test(model, test_dataloader, device, criterion)
+create_cm(model, best_val_accuracy_path, test_dataloader)
 print('-'*100)
 
+
+# get_tests(model, os.path.join(run_dir, 'test'), test_dataloader)
 
 
 
