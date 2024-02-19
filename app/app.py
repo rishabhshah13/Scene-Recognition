@@ -30,15 +30,31 @@ best_models_path = {'densenet':'models/saved_models/best_models/densenet_best.pt
 
 
 def load_models():
+    try:
+        densenet_model = torch.load(best_models_path['densenet'], map_location=device)
+    except Exception as e:
+        print(f"Error loading DenseNet model: {e}")
+        return False
 
-    densenet_model = torch.load(best_models_path['densenet'],map_location=device )
-    enet_model = torch.load(best_models_path['enet_s'],map_location=device)
-    resnet_model = torch.load(best_models_path['resnet18'],map_location=device)
-    vgg_model = torch.load(best_models_path['vgg'],map_location=device)
+    try:
+        enet_model = torch.load(best_models_path['enet_s'], map_location=device)
+    except Exception as e:
+        print(f"Error loading ENet model: {e}")
+        return False
+
+    try:
+        resnet_model = torch.load(best_models_path['resnet18'], map_location=device)
+    except Exception as e:
+        print(f"Error loading ResNet model: {e}")
+        return False
+
+    try:
+        vgg_model = torch.load(best_models_path['vgg'], map_location=device)
+    except Exception as e:
+        print(f"Error loading VGG model: {e}")
+        return False
 
     return densenet_model, enet_model, resnet_model, vgg_model
-
-
 
 
 

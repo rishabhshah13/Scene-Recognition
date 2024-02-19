@@ -62,6 +62,8 @@ python data/download.py --download_data True --download_models True
 Data Transformation is done by Albumentations library
 
 ### Train Model
+Train all of them atleast for 1 epoch
+
 ```bash
 # To Train ResNet18
 python models/main.py --model_base resnet18 --num_epochs  100 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints 1,3 --use_albumentations True --opt adam
