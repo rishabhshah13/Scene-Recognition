@@ -47,7 +47,7 @@ def load_models():
 from torchvision.io.image import read_image
 from torchvision.transforms.functional import normalize, resize, to_pil_image
 from torchvision.models import resnet18
-from torchcam.methods import SmoothGradCAMpp
+from torchcam.methods import SmoothGradCAMpp,ScoreCAM,SSCAM,XGradCAM,LayerCAM
 
 import matplotlib.pyplot as plt
 from torchcam.utils import overlay_mask
@@ -95,7 +95,8 @@ def get_torch_cam(model,model_name,img):
     # print(model)
 
     # with SmoothGradCAMpp(model,layer_name=layer_name) as cam_extractor:
-    with SmoothGradCAMpp(model,target_layer=layer_name) as cam_extractor:
+    # with SSCAM(model,target_layer=layer_name) as cam_extractor:
+    with LayerCAM(model,target_layer=layer_name) as cam_extractor:
         out = model(input_tensor.to(device).unsqueeze(0))
         # Retrieve the CAM by passing the class index and the model output
         activation_map = cam_extractor(out.squeeze(0).argmax().item(), out)

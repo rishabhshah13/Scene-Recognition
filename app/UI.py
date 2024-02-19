@@ -55,19 +55,46 @@ if uploadbtn or st.session_state.uploadbtn_state:
 
     image_file = st.file_uploader("Upload image", type=["jpg", "jpeg"])
 
+    # if image_file is not None:
+    #     org_image = pil.Image.open(image_file, mode='r')
+    #     st.text("Uploaded image")
+    #     st.image(org_image, caption='Image for Prediction')
+    #     pred_button = st.button("Perform Prediction")
+    #     if pred_button:
+    #         st.image(org_image, caption='Predicted Image')
+
+    #         for model_name, model in model_loaded_list.items():
+    #             predicted_class, predicted_class_name = predict(model,org_image,device)
+    #             st.write(f"The class predict by {model_name} is  : {predicted_class_name}")
+    #             result = get_torch_cam(model,model_name,org_image)
+    #             st.image(result, caption=f'{model_name }Predicted Heat Map Image')
+
     if image_file is not None:
         org_image = pil.Image.open(image_file, mode='r')
-        st.text("Uploaded image")
-        st.image(org_image, caption='Image for Prediction')
+        # st.text("Uploaded image")
+        # st.image(org_image, caption='Image for Prediction')
         pred_button = st.button("Perform Prediction")
         if pred_button:
-            st.image(org_image, caption='Predicted Image')
+            st.image(org_image, caption='Uploaded Image')
 
-            # for model in model_loaded_list:
+            # Create a  2x2 grid layout
+            col1, col2, col3, col4 = st.columns(4)
+
+            image_col_list = [col1, col2, col3, col4]
+            # Display the image in the first column
+            # col1.image(org_image, caption='Image  1')
+
+            # # Repeat the image in the other three columns
+            # col2.image(org_image, caption='Image  2')
+            # col3.image(org_image, caption='Image  3')
+            # col4.image(org_image, caption='Image  4')
+
+
+            i = 0
             for model_name, model in model_loaded_list.items():
-
-                predicted_class, predicted_class_name = predict(model,org_image,device)
-                st.write(f"The class predict by {model_name} is  : {predicted_class_name}")
-                result = get_torch_cam(model,model_name,org_image)
-                st.image(result, caption=f'{model_name }Predicted Heat Map Image')
-
+                predicted_class, predicted_class_name = predict(model, org_image, device)
+                # st.write(f"The class predict by {model_name} is  : {predicted_class_name}")
+                result = get_torch_cam(model, model_name, org_image)
+                # st.image(result, caption=f'{model_name }Predicted Heat Map Image')
+                image_col_list[i].image(result, caption=f'{model_name } Predicted: {predicted_class_name}')
+                i += 1
