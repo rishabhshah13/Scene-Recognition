@@ -14,9 +14,9 @@ Download the dataset from [Google Drive](https://drive.google.com/file/d/112pPeJ
 
 Ensure you have the following dependencies and requirements installed to run the project:
 
-- Python 3.6+
-- Pytorch 
-- Pandas
+- Python 3.11.0+
+- Pytorch 2.20
+- Torchvision 0.17.0
 
 ### Installation
 
