@@ -13,6 +13,9 @@ def main(args):
         with ZipFile('data/raw.zip', 'r') as zipObj:
             zipObj.extractall('data/')
 
+    if not os.path.exists('models/saved_models/'):
+        os.makedirs('models/saved_models/')
+        
     # Download best models
     if args.download_models and not os.path.exists('models/saved_models/best_models.zip'):
         output = "models/saved_models/best_models.zip"
