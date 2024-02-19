@@ -1,0 +1,16 @@
+# /Data/*
+# Data
+# Data/*
+__pycache__/
+saved_models/*
+/scenevenv/*
+/venv/*
+/output/*
+data/raw/*
+Orignal_Data/*
+models/saved_models/*
+data/raw.zip
+/Notebooks/snapshot_iter_765280.caffemodel
+/Notebooks/deploy_10.prototxt
+/Notebooks/Converter/*
+/Notebooks/ScoreCam/*
