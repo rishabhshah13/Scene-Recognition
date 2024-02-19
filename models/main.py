@@ -23,7 +23,7 @@ from test import test, create_cm
 # seed randoms and make deterministic
 torch.backends.cudnn.enabled=False
 torch.backends.cudnn.deterministic=True
-
+import shutil
 
 import ssl
 
@@ -162,6 +162,16 @@ if os.path.exists(best_val_accuracy_path):
 else:
     print("Best model weights not found.")
     # return
+
+new_best_val_accuracy_path = os.path.join('models/saved_models/best_models/', f'{model_base}_best.pt')
+
+# Check if the original path exists and create a new copy at the new path
+if os.path.exists(best_val_accuracy_path):
+    shutil.copy(best_val_accuracy_path, new_best_val_accuracy_path)
+    print(f"Created a new copy of the best model at {new_best_val_accuracy_path}")
+else:
+    print("Original best model weights not found.")
+
 
 test_loss, test_metric,top1_test_accuracy  = test(model, test_dataloader, device, criterion)
 create_cm(model, best_val_accuracy_path, test_dataloader)

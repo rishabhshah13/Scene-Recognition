@@ -1,18 +1,13 @@
-import pandas
 import torch
-
-import sys
-from pathlib import Path
 import os
-# current_dir = Path(__file__).resolve().parent.parent
-# # Append the parent directory to the Python path
-# sys.path.append(str(current_dir))
 
-# # Now you can import from the models package
-# from models.Predict import predict
+from torchvision.io.image import read_image
+from torchvision.transforms.functional import normalize, resize, to_pil_image
+from torchvision.models import resnet18
+from torchcam.methods import SmoothGradCAMpp,ScoreCAM,SSCAM,XGradCAM,LayerCAM
 
+from torchcam.utils import overlay_mask
 
-#Load Best models from dataframe
 import torchvision.transforms as transforms
 
 
@@ -28,10 +23,10 @@ if device == 'mps':
     torch.mps.empty_cache()
 
 
-best_models_path = {'densenet':'/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/models/saved_models/best_models/densenet_best_val_loss_33.pt', \
-                    'enet_s':'/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/models/saved_models/best_models/enet_s_best_val_loss_20.pt', \
-                    'resnet18':'/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/models/saved_models/best_models/resnet18_best_val_loss_3.pt', \
-                    'vgg':'/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/models/saved_models/best_models/vgg_best_val_loss_42.pt'}
+best_models_path = {'densenet':'models/saved_models/best_models/densenet_best.pt', \
+                    'enet_s':'models/saved_models/best_models/enet_s_best.pt', \
+                    'resnet18':'models/saved_models/best_models/resnet18_best.pt', \
+                    'vgg':'models/saved_models/best_models/vgg_best.pt'}
 
 
 def load_models():
@@ -44,13 +39,7 @@ def load_models():
     return densenet_model, enet_model, resnet_model, vgg_model
 
 
-from torchvision.io.image import read_image
-from torchvision.transforms.functional import normalize, resize, to_pil_image
-from torchvision.models import resnet18
-from torchcam.methods import SmoothGradCAMpp,ScoreCAM,SSCAM,XGradCAM,LayerCAM
 
-import matplotlib.pyplot as plt
-from torchcam.utils import overlay_mask
 
 
 def get_torch_cam(model,model_name,img):
@@ -77,25 +66,13 @@ def get_torch_cam(model,model_name,img):
     
     preprocess = transforms.Compose([
         transforms.Resize([224,224]),
-        # transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485,  0.456,  0.406], std=[0.229,  0.224,  0.225]),
+        transforms.ToTensor()
     ])
 
     # Load and preprocess the image
-    # org_image = pil.Image.open('/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/output/test/cathedral/gsun_1a8814d41a9e6565b1b947d8b79c4c39.jpg')
     input_tensor = preprocess(img)
-    # input_batch = input_tensor.unsqueeze(0)  # create a mini-batch as expected by the model
+ 
 
-
-    # img = read_image('/Users/rishabhshah/Desktop/AIPI 590/Scene-Recognition/data/raw/test/campsite/gsun_1b62d632c3a49e04c7410080aad77c50.jpg')
-
-    # Preprocess it for your chosen model
-    # input_tensor = normalize(resize(img, (224, 224)) / 255., [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    # print(model)
-
-    # with SmoothGradCAMpp(model,layer_name=layer_name) as cam_extractor:
-    # with SSCAM(model,target_layer=layer_name) as cam_extractor:
     with LayerCAM(model,target_layer=layer_name) as cam_extractor:
         out = model(input_tensor.to(device).unsqueeze(0))
         # Retrieve the CAM by passing the class index and the model output

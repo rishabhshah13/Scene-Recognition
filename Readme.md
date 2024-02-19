@@ -46,10 +46,16 @@ The dataset used in this project is [describe the dataset here, e.g., SceneNet, 
 ## Model
 
 
-### Download Data set
+### Download Data set (without best models)
 ```bash
-python data/download.py
+python data/download.py --download_data True --download_models False
 ```
+
+### Download Data set (without best models)
+```bash
+python data/download.py --download_data True --download_models True
+```
+
 
 ### Transform Data set
 
@@ -67,7 +73,7 @@ python models/main.py --model_base enet_s --num_epochs  50 --batch_size  32 --le
 python models/main.py --model_base vgg --num_epochs  50 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints  1,2,3 --use_albumentations False --opt adam
 
 # To Train DenseNet
-python models/main.py --model_base densenet --num_epochs  50 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints 1,3 --use_albumentations True --opt sgd
+python models/main.py --model_base densenet --num_epochs  5 --batch_size  32 --learning_rate  0.001 --random_seed  42 --use_split --save_checkpoints 1,3 --use_albumentations True --opt sgd
 ```
 
 ### Run UI
