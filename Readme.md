@@ -76,3 +76,4 @@ streamlit run app/UI.py
 ```
 
 This README provides a comprehensive guide to setting up and using the Scene Recognition project. For further details or assistance, feel free to reach out.
+
